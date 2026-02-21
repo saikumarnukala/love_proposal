@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>💌 A Special Message For You</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --pink:   #f953c6;
+  --rose:   #b91d73;
+  --deep:   #7b0050;
+  --light:  #fff0f8;
+  --glass:  rgba(255,255,255,0.18);
+  --shadow: rgba(180,20,100,0.25);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width:100%; height:100%; overflow:hidden; font-family:'Nunito',sans-serif; cursor:none; }
+
+/* ── Custom cursor ─────────────────────────── */
+#cursor {
+  position:fixed; z-index:99999; pointer-events:none;
+  font-size:1.3rem; transform:translate(-50%,-50%);
+  transition:transform 0.08s;
+  filter:drop-shadow(0 0 4px #f953c6);
+}
+#cursor.big { transform:translate(-50%,-50%) scale(1.7); }
+
+/* ── Canvas ────────────────────────────────── */
+#canvas { position:fixed; inset:0; z-index:0; }
+
+/* ── Background ────────────────────────────── */
+body { background:linear-gradient(135deg,#1a0030 0%,#3d0060 40%,#7b0050 70%,#b91d73 100%); }
+
+/* ── App shell ─────────────────────────────── */
+#app {
+  position:relative; z-index:10;
+  width:100vw; height:100vh;
+  display:flex; align-items:center; justify-content:center;
+}
+
+.screen {
+  display:none; flex-direction:column;
+  align-items:center; justify-content:center;
+  width:100%; height:100%;
+  animation:fadeSlideIn 0.7s cubic-bezier(.34,1.4,.64,1) both;
+}
+.screen.active { display:flex; }
+
+@keyframes fadeSlideIn {
+  from { opacity:0; transform:translateY(40px) scale(0.95); }
+  to   { opacity:1; transform:none; }
+}
+
+/* ── Glass card ────────────────────────────── */
+.card {
+  background:rgba(255,255,255,0.12);
+  backdrop-filter:blur(20px) saturate(1.8);
+  border:1px solid rgba(255,255,255,0.25);
+  border-radius:32px; padding:44px 44px 40px;
+  max-width:480px; width:92vw; text-align:center;
+  box-shadow:0 24px 70px var(--shadow),0 0 0 1px rgba(255,255,255,0.08);
+  position:relative; overflow:visible;
+}
+
+/* ── Typography ────────────────────────────── */
+.script { font-family:'Dancing Script',cursive; color:#fff; }
+.h1 { font-size:clamp(2rem,5vw,2.8rem); line-height:1.2; margin-bottom:12px; }
+.h2 { font-size:clamp(1.4rem,4vw,2rem); line-height:1.3; margin-bottom:10px; }
+.body-text { color:rgba(255,255,255,0.85); font-size:1rem; line-height:1.75; }
+.sub-text  { color:rgba(255,255,255,0.5); font-size:0.9rem; font-style:italic; margin-top:6px; }
+.glow      { text-shadow:0 0 20px var(--pink),0 0 40px var(--pink); }
+
+/* ── Emoji row ─────────────────────────────── */
+.emoji-row { font-size:1.7rem; letter-spacing:6px; margin-bottom:18px; animation:pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1);}50%{transform:scale(1.1);} }
+
+/* ── Input ─────────────────────────────────── */
+.love-input {
+  width:100%; padding:14px 22px;
+  border-radius:50px; border:2px solid rgba(255,255,255,0.3);
+  background:rgba(255,255,255,0.1); color:#fff;
+  font-size:1.1rem; font-family:'Nunito',sans-serif;
+  outline:none; text-align:center;
+  transition:border-color 0.3s,background 0.3s; margin-top:18px;
+}
+.love-input::placeholder { color:rgba(255,255,255,0.4); }
+.love-input:focus { border-color:var(--pink); background:rgba(255,255,255,0.18); }
+
+/* ── Buttons ────────────────────────────────── */
+.btn {
+  padding:14px 36px; border-radius:50px; border:none;
+  font-size:1.05rem; font-weight:800; cursor:none; outline:none;
+  transition:transform 0.15s,box-shadow 0.15s; letter-spacing:0.5px;
+}
+.btn-yes {
+  background:linear-gradient(135deg,#f953c6,#b91d73);
+  color:#fff; box-shadow:0 8px 28px rgba(249,83,198,0.5);
+}
+.btn-yes:hover { transform:scale(1.07); box-shadow:0 14px 36px rgba(249,83,198,0.65); }
+.btn-yes:active { transform:scale(0.95); }
+
+.btn-no {
+  position:fixed; z-index:9999; cursor:none;
+  background:rgba(255,255,255,0.14);
+  color:rgba(255,255,255,0.6);
+  box-shadow:0 4px 14px rgba(0,0,0,0.2);
+  transition:none;
+  border:1px solid rgba(255,255,255,0.2);
+}
+
+.btn-ghost {
+  background:transparent; color:rgba(255,255,255,0.55);
+  border:1px solid rgba(255,255,255,0.25); font-size:0.9rem;
+  padding:10px 26px; margin-top:18px;
+}
+.btn-ghost:hover { background:rgba(255,255,255,0.08); }
+
+.btn-row { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-top:28px; }
+
+/* ── Progress dots ──────────────────────────── */
+.steps { display:flex; gap:10px; justify-content:center; margin-bottom:28px; }
+.step-dot {
+  width:10px; height:10px; border-radius:50%;
+  background:rgba(255,255,255,0.2); transition:all 0.4s;
+}
+.step-dot.done { background:var(--pink); box-shadow:0 0 8px var(--pink); transform:scale(1.2); }
+
+/* ── Letter box ─────────────────────────────── */
+.letter-box {
+  background:rgba(255,255,255,0.07);
+  border:1px dashed rgba(255,255,255,0.22);
+  border-radius:16px; padding:20px 22px; margin:18px 0; text-align:left;
+}
+.scroll-letter {
+  max-height:160px; overflow-y:auto; text-align:left; padding-right:6px;
+  scrollbar-width:thin; scrollbar-color:var(--pink) transparent;
+}
+.scroll-letter::-webkit-scrollbar { width:4px; }
+.scroll-letter::-webkit-scrollbar-thumb { background:var(--pink); border-radius:4px; }
+
+/* ── Typewriter cursor ──────────────────────── */
+.cursor-blink {
+  display:inline-block; width:2px; height:1em;
+  background:var(--pink); margin-left:2px;
+  animation:blink 0.8s step-end infinite; vertical-align:text-bottom;
+}
+@keyframes blink { 0%,100%{opacity:1;}50%{opacity:0;} }
+
+/* ── Stats ──────────────────────────────────── */
+.stats { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-top:20px; }
+.stat-box {
+  background:rgba(255,255,255,0.08); border-radius:14px;
+  padding:12px 20px; min-width:88px;
+}
+.stat-num { font-size:1.8rem; font-weight:800; color:var(--pink); }
+.stat-lbl { font-size:0.73rem; color:rgba(255,255,255,0.5); }
+
+/* ── No-button tooltip ──────────────────────── */
+#noBtnTip {
+  position:fixed; z-index:99998;
+  background:rgba(0,0,0,0.65); color:#fff;
+  font-size:0.82rem; font-family:'Nunito',sans-serif;
+  padding:6px 14px; border-radius:20px;
+  pointer-events:none; white-space:nowrap;
+  opacity:0; transition:opacity 0.3s;
+  border:1px solid rgba(255,255,255,0.15);
+}
+
+/* ── Reply screen ───────────────────────────── */
+.big-heart { font-size:6rem; animation:heartbeat 0.9s ease-in-out infinite; display:block; }
+@keyframes heartbeat { 0%,100%{transform:scale(1);}50%{transform:scale(1.2);} }
+
+/* ── Gift bounce ────────────────────────────── */
+.gift-bounce { animation:giftBounce 0.8s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes giftBounce { from{transform:scale(0) rotate(-20deg);}to{transform:scale(1) rotate(0deg);} }
+
+/* ── Deco floating heart ────────────────────── */
+.deco-heart {
+  position:fixed; pointer-events:none; z-index:8000;
+  opacity:0; animation:floatOff 2s ease forwards;
+}
+@keyframes floatOff {
+  0%   { opacity:1; transform:translateY(0) scale(1); }
+  100% { opacity:0; transform:translateY(-110px) scale(0.3); }
+}
+
+/* ── GIF avatar ─────────────────────────────── */
+.avatar {
+  width:120px; height:120px; border-radius:50%;
+  object-fit:cover; border:4px solid rgba(249,83,198,0.7);
+  box-shadow:0 4px 24px rgba(249,83,198,0.4);
+  margin-bottom:18px;
+}
+
+@media(max-width:480px){
+  .card{padding:30px 22px 26px;}
+  .h1{font-size:1.9rem;} .h2{font-size:1.5rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Custom cursor ─────────────────── -->
+<div id="cursor">💖</div>
+
+<!-- ── Canvas: stars + fireworks ──────── -->
+<canvas id="canvas"></canvas>
+
+<!-- ── No-button tooltip ──────────────── -->
+<div id="noBtnTip"></div>
+
+<div id="app">
+
+  <!-- ══════════ SCREEN 1 — Intro / Name ══════════ -->
+  <div class="screen active" id="s1">
+    <div class="card">
+      <img class="avatar" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYzFhc3ZlZjliMXE0aGhrcHBqeGxsNG9ib3A0NTZpd2VidW5zMXkzZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/MDJ9IbxxvDUQM/giphy.gif" alt="cute bear"/>
+      <div class="emoji-row">✨ 💌 ✨</div>
+      <div class="script h1 glow">Hey there, beautiful...</div>
+      <p class="body-text" style="margin-top:12px;">
+        I've been holding something in my heart<br>and I finally worked up the courage to say it.
+      </p>
+      <p class="sub-text">But first — what's your name? 🌸</p>
+      <input class="love-input" id="nameInput" placeholder="Your name here..." maxlength="30" autocomplete="off"/>
+      <div class="btn-row">
+        <button class="btn btn-yes" onclick="goToS2()">Continue 💕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SCREEN 2 — Love Letter ══════════ -->
+  <div class="screen" id="s2">
+    <div class="card">
+      <div class="steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+        <div class="step-dot"></div>
+        <div class="step-dot"></div>
+      </div>
+      <div class="emoji-row">📜 💌 📜</div>
+      <div class="script h2">Dear <span id="nameSpan"></span>,</div>
+      <div class="letter-box">
+        <div class="scroll-letter">
+          <p class="body-text" id="letterText"></p>
+          <span class="cursor-blink" id="typeCursor"></span>
+        </div>
+      </div>
+      <div class="btn-row" id="letterNext" style="display:none;">
+        <button class="btn btn-yes" onclick="goToS3()">Keep reading... 💗</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SCREEN 3 — Reasons ══════════ -->
+  <div class="screen" id="s3">
+    <div class="card">
+      <div class="steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+        <div class="step-dot"></div>
+      </div>
+      <div class="emoji-row">🌹 💖 🌹</div>
+      <div class="script h2 glow">Why you? 🥹</div>
+      <div class="letter-box" style="text-align:left;">
+        <ul id="reasonsList" style="list-style:none;padding:0;"></ul>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-yes" onclick="goToProposal()">What are you trying to say...? 🫦</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SCREEN 4 — Proposal ══════════ -->
+  <div class="screen" id="s4">
+    <div class="card">
+      <div class="steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+      </div>
+      <div class="emoji-row" id="proposalEmoji" style="font-size:3.2rem;">💍</div>
+      <div class="script h1 glow" id="propTitle">Will you be mine?</div>
+      <p class="body-text" style="margin:10px 0 4px;">
+        Will you do me the honour of being my Valentine? 🌹
+      </p>
+      <p class="sub-text" id="noHint" style="min-height:1.4em;transition:all 0.3s;"></p>
+
+      <div class="stats" id="statsRow" style="display:none;">
+        <div class="stat-box">
+          <div class="stat-num" id="escapeStat">0</div>
+          <div class="stat-lbl">No attempts 😂</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="lovePct">100%</div>
+          <div class="stat-lbl">My love for you</div>
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-top:28px;min-height:60px;position:relative;">
+        <button class="btn btn-yes" id="yesBtn" onclick="onYes()">Yes! 💖</button>
+        <button class="btn btn-no"  id="noBtn"
+                onmouseenter="escapeNo(event)"
+                ontouchstart="escapeNo(event)">No 🙄</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SCREEN 5 — Reply ══════════ -->
+  <div class="screen" id="replyScreen">
+    <div class="card" style="max-width:520px;">
+      <span class="big-heart gift-bounce">❤️</span>
+      <div class="script h1 glow" style="margin-top:14px;">She said YES!! 🎉</div>
+      <p class="body-text" style="margin-top:14px;" id="replyMsg">
+        You just made my whole world complete! 🌙<br><br>
+        I promise to love you every single day,<br>
+        through every smile and every storm. 🌹<br><br>
+        Thank you for choosing me,&nbsp;<strong id="replyName" style="color:var(--pink);font-size:1.15em;"></strong>. 💖
+      </p>
+      <div class="stats" style="margin-top:22px;">
+        <div class="stat-box">
+          <div class="stat-num" id="finalEscape">0</div>
+          <div class="stat-lbl">Times No ran away</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">∞</div>
+          <div class="stat-lbl">My love for you</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">1</div>
+          <div class="stat-lbl">You 🥰</div>
+        </div>
+      </div>
+      <div class="emoji-row" style="margin-top:26px;font-size:1.8rem;letter-spacing:10px;">💖 💕 💗 💓 💝</div>
+      <button class="btn btn-ghost" onclick="restart()">Start over 🔁</button>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<script>
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let nameVal   = '';
+let noCount   = 0;
+let noBtnScale= 1;
+let audioCtx  = null;
+let typeTimer = null;
+let fireworksOn = false;
+
+// ══════════════════════════════════════════
+//  CUSTOM CURSOR
+// ══════════════════════════════════════════
+const cursorEl = document.getElementById('cursor');
+const HEARTS_LIST = ['💖','💕','💗','💝','💘','❤️','🌹','✨'];
+
+document.addEventListener('mousemove', e => {
+  cursorEl.style.left = e.clientX + 'px';
+  cursorEl.style.top  = e.clientY + 'px';
+});
+document.addEventListener('mousedown', e => {
+  if (!e.target.closest('#noBtn')) spawnHeart(e.clientX, e.clientY);
+  cursorEl.classList.add('big');
+  setTimeout(() => cursorEl.classList.remove('big'), 280);
+});
+
+// ══════════════════════════════════════════
+//  WEB AUDIO — synthetic sounds (no files)
+// ══════════════════════════════════════════
+function audio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function tone(freq, type, dur, vol, delay=0) {
+  try {
+    const c = audio(), o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = type; o.frequency.value = freq;
+    const t = c.currentTime + delay;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.start(t); o.stop(t + dur + 0.05);
+  } catch(_) {}
+}
+const sndClick  = () => { tone(880,'sine',0.12,0.18); tone(1100,'sine',0.1,0.12,0.05); };
+const sndEscape = () => { tone(220,'sawtooth',0.08,0.15); tone(160,'sawtooth',0.1,0.1,0.07); };
+const sndYes    = () => [523,659,784,1047,1318].forEach((f,i)=>tone(f,'sine',0.35,0.22,i*0.09));
+const sndType   = () => tone(580+Math.random()*220,'sine',0.04,0.05);
+
+// ══════════════════════════════════════════
+//  CANVAS — STARS + FIREWORKS
+// ══════════════════════════════════════════
+const cv  = document.getElementById('canvas');
+const c2d = cv.getContext('2d');
+let W, H, stars=[], particles=[];
+
+function resize(){ W = cv.width = innerWidth; H = cv.height = innerHeight; }
+resize(); addEventListener('resize', resize);
+
+for(let i=0;i<140;i++) stars.push({
+  x:Math.random()*9999, y:Math.random()*9999,
+  r:Math.random()*1.4+0.3,
+  a:Math.random(), da:(Math.random()-0.5)*0.025
+});
+
+const FW_COLORS=['#f953c6','#ff6b9d','#ffec5c','#7cffa4','#5cf3ff','#fff','#ffd700','#ff4d4d'];
+const FW_EMOJIS =['💖','💕','✨','🌟','🎊','🎉'];
+
+class Particle {
+  constructor(x,y,color){
+    this.x=x; this.y=y;
+    const a=Math.random()*Math.PI*2, sp=2+Math.random()*7;
+    this.vx=Math.cos(a)*sp; this.vy=Math.sin(a)*sp-3;
+    this.color=color; this.life=1;
+    this.decay=0.014+Math.random()*0.018;
+    this.r=3+Math.random()*5; this.grav=0.13;
+    this.emoji=Math.random()>0.72?FW_EMOJIS[Math.floor(Math.random()*FW_EMOJIS.length)]:null;
+  }
+  update(){ this.x+=this.vx; this.y+=this.vy; this.vy+=this.grav; this.vx*=0.99; this.life-=this.decay; }
+  draw(){
+    if(this.emoji){
+      c2d.globalAlpha=this.life;
+      c2d.font=`${this.r*3.2}px serif`;
+      c2d.fillText(this.emoji,this.x,this.y);
+    } else {
+      c2d.globalAlpha=this.life;
+      c2d.fillStyle=this.color;
+      c2d.beginPath(); c2d.arc(this.x,this.y,this.r*this.life,0,Math.PI*2); c2d.fill();
+    }
+    c2d.globalAlpha=1;
+  }
+}
+
+function launchFirework(){
+  const x=50+Math.random()*(W-100), y=50+Math.random()*H*0.55;
+  const col=FW_COLORS[Math.floor(Math.random()*FW_COLORS.length)];
+  for(let i=0;i<90;i++) particles.push(new Particle(x,y,col));
+}
+
+(function loop(){
+  requestAnimationFrame(loop);
+  c2d.clearRect(0,0,W,H);
+  const t=Date.now()*0.0008;
+  stars.forEach(s=>{
+    s.a+=s.da;
+    c2d.globalAlpha=0.25+0.55*Math.abs(Math.sin(s.a));
+    c2d.fillStyle='#fff';
+    c2d.beginPath();
+    c2d.arc((s.x+t*12)%W,(s.y+t*6)%H,s.r,0,Math.PI*2);
+    c2d.fill();
+  });
+  c2d.globalAlpha=1;
+  particles=particles.filter(p=>p.life>0);
+  particles.forEach(p=>{p.update();p.draw();});
+  if(fireworksOn&&Math.random()<0.07) launchFirework();
+})();
+
+// ══════════════════════════════════════════
+//  FLOATING HEARTS
+// ══════════════════════════════════════════
+function spawnHeart(x, y, count=1){
+  for(let i=0;i<count;i++){
+    const el=document.createElement('div');
+    el.className='deco-heart';
+    el.textContent=HEARTS_LIST[Math.floor(Math.random()*HEARTS_LIST.length)];
+    el.style.left=(x+Math.random()*30-15)+'px';
+    el.style.top =(y+Math.random()*20-10)+'px';
+    el.style.fontSize=(0.9+Math.random()*1.1)+'rem';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),2200);
+  }
+}
+
+// ══════════════════════════════════════════
+//  SCREEN HELPERS
+// ══════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  sndClick();
+}
+
+// ══════════════════════════════════════════
+//  SCREEN 1 → 2
+// ══════════════════════════════════════════
+function goToS2(){
+  nameVal = (document.getElementById('nameInput').value.trim()) || 'You';
+  document.getElementById('nameSpan').textContent = nameVal;
+  showScreen('s2');
+  runTypewriter();
+}
+
+// ══════════════════════════════════════════
+//  TYPEWRITER
+// ══════════════════════════════════════════
+const LETTER = `Every time you smile, my heart does something ridiculous — ` +
+  `it skips, it flips, it practically cartwheels. ` +
+  `I notice the little things: the way you laugh, the warmth in your eyes, ` +
+  `even the way you say my name. ` +
+  `I have been trying to find the right words for a while now, ` +
+  `and I finally realized — maybe there aren't perfect words. ` +
+  `Maybe there's just this: I really, truly like you. ` +
+  `And I'd love the chance to show you just how much. 🌹`;
+
+function runTypewriter(){
+  const el  = document.getElementById('letterText');
+  const cur = document.getElementById('typeCursor');
+  el.textContent = ''; cur.style.display='inline-block';
+  let i = 0;
+  function tick(){
+    sndType();
+    el.textContent += LETTER[i]; i++;
+    if(i < LETTER.length){
+      const d = '.!?,'.includes(LETTER[i-1]) ? 380 : LETTER[i-1]===' ' ? 28 : 40;
+      typeTimer = setTimeout(tick, d);
+    } else {
+      cur.style.display='none';
+      document.getElementById('letterNext').style.display='flex';
+    }
+  }
+  tick();
+}
+
+// ══════════════════════════════════════════
+//  SCREEN 2 → 3
+// ══════════════════════════════════════════
+const REASONS = [
+  '💫  Your smile lights up every room you walk into',
+  '🌸  The way you care so deeply about the people around you',
+  '😂  You make me laugh even on my very worst days',
+  '✨  Your kindness is one of a kind — truly rare',
+  '🌙  I feel calm and at peace whenever you\'re near',
+  '🔥  Your passion and drive are honestly so inspiring',
+  '🤝  You just *get* me — and that means everything to me',
+];
+
+function goToS3(){
+  clearTimeout(typeTimer);
+  showScreen('s3');
+  const ul = document.getElementById('reasonsList');
+  ul.innerHTML='';
+  REASONS.forEach((r,i)=>{
+    setTimeout(()=>{
+      const li=document.createElement('li');
+      li.className='body-text'; li.style.cssText='padding:5px 0;opacity:0;transition:opacity 0.5s;';
+      li.textContent=r; ul.appendChild(li);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>li.style.opacity=1));
+      sndType();
+    }, i*260);
+  });
+}
+
+// ══════════════════════════════════════════
+//  SCREEN 3 → 4
+// ══════════════════════════════════════════
+function goToProposal(){
+  document.getElementById('propTitle').textContent=`${nameVal}, will you be mine? 💍`;
+  showScreen('s4');
+  setTimeout(()=>{
+    const yb=document.getElementById('yesBtn').getBoundingClientRect();
+    const nb=document.getElementById('noBtn');
+    nb.style.top =(yb.top)+'px';
+    nb.style.left=(yb.right+16)+'px';
+    nb.style.display='block';
+  }, 320);
+}
+
+// ══════════════════════════════════════════
+//  NO BUTTON ESCAPE
+// ══════════════════════════════════════════
+const NO_HINTS = [
+  "Oops! That button is broken 😝",
+  "Wrong one! Try the pink button! 🙈",
+  "The No button is very busy running 🏃",
+  "Are you suuure? Look again! 👀",
+  "Nooo! Just click YES! 😂",
+  "That button called in sick today 🤧",
+  "You will NEVER catch it! 😈",
+  "The No has left the building 🚪💨",
+  "It keeps running lol 😂",
+  "Just say YES already!! 😤",
+  "The No is scared of commitment too 😅",
+  "The No button has gone into witness protection 🕵️",
+  "Error 404: No button not found 🤣",
+];
+
+function escapeNo(e){
+  if(e) e.stopPropagation();
+  noCount++;
+
+  const nb   = document.getElementById('noBtn');
+  const nbW  = nb.offsetWidth  || 96;
+  const nbH  = nb.offsetHeight || 48;
+  const M    = 14;
+  const newX = M + Math.random()*(innerWidth  - nbW - M*2);
+  const newY = M + Math.random()*(innerHeight - nbH - M*2);
+  nb.style.left=newX+'px'; nb.style.top=newY+'px';
+
+  // Shrink No button (floor 0.45)
+  noBtnScale = Math.max(0.45, noBtnScale - 0.055);
+  nb.style.transform = `scale(${noBtnScale})`;
+
+  // Grow Yes button (ceiling 1.55)
+  const ys = Math.min(1 + noCount*0.04, 1.55);
+  document.getElementById('yesBtn').style.transform=`scale(${ys})`;
+
+  // Hint text
+  const hint = NO_HINTS[Math.min(noCount-1, NO_HINTS.length-1)];
+  document.getElementById('noHint').textContent = hint;
+
+  // Show stats after 2nd attempt
+  if(noCount>=2) document.getElementById('statsRow').style.display='flex';
+  document.getElementById('escapeStat').textContent = noCount;
+  document.getElementById('lovePct').textContent    = '100%+';
+
+  // Tooltip near button
+  const tip=document.getElementById('noBtnTip');
+  tip.textContent=hint;
+  const tipW=Math.min(300, hint.length*8);
+  tip.style.left = Math.min(newX, innerWidth-tipW-10)+'px';
+  tip.style.top  = Math.max(10, newY-38)+'px';
+  tip.style.opacity='1';
+  clearTimeout(tip._t);
+  tip._t = setTimeout(()=>tip.style.opacity='0', 1900);
+
+  sndEscape();
+
+  // Cursor chaos
+  cursorEl.textContent=['😈','🏃','💨','🙈','😂'][Math.floor(Math.random()*5)];
+  setTimeout(()=>cursorEl.textContent='💖', 700);
+
+  // Pop a few hearts from the running button
+  spawnHeart(newX+nbW/2, newY, 2);
+}
+
+// ══════════════════════════════════════════
+//  YES CLICKED
+// ══════════════════════════════════════════
+function onYes(){
+  sndYes();
+  fireworksOn = true;
+
+  document.getElementById('noBtn').style.display='none';
+  document.getElementById('replyName').textContent=nameVal;
+  document.getElementById('finalEscape').textContent=noCount;
+
+  showScreen('replyScreen');
+  cursorEl.textContent='🎉';
+
+  // Burst fireworks
+  for(let i=0;i<10;i++) setTimeout(launchFirework, i*150);
+
+  // Scatter hearts
+  for(let i=0;i<28;i++){
+    setTimeout(()=>spawnHeart(
+      60+Math.random()*(innerWidth-120),
+      60+Math.random()*(innerHeight-120)
+    ), i*60);
+  }
+
+  setTimeout(()=> cursorEl.textContent='💖', 2500);
+}
+
+// ══════════════════════════════════════════
+//  RESTART
+// ══════════════════════════════════════════
+function restart(){
+  noCount=0; noBtnScale=1; nameVal=''; fireworksOn=false; particles=[];
+  clearTimeout(typeTimer);
+  document.getElementById('nameInput').value='';
+  document.getElementById('yesBtn').style.transform='';
+  const nb=document.getElementById('noBtn');
+  nb.style.transform=''; nb.style.display='block';
+  document.getElementById('statsRow').style.display='none';
+  document.getElementById('noHint').textContent='';
+  document.getElementById('escapeStat').textContent='0';
+  document.getElementById('lovePct').textContent='100%';
+  showScreen('s1');
+}
+
+// ══════════════════════════════════════════
+//  Enter key on name input
+// ══════════════════════════════════════════
+document.getElementById('nameInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter') goToS2();
+});
+</script>
+</body>
+</html>
