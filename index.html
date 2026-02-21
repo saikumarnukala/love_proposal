@@ -407,6 +407,12 @@ body { background:linear-gradient(135deg,#1a0030 0%,#3d0060 40%,#7b0050 70%,#b91
         </div>
       </div>
       <div class="emoji-row" style="margin-top:26px;font-size:1.8rem;letter-spacing:10px;">💖 💕 💗 💓 💝</div>
+      <a href="https://wa.me/918985060603?text=%F0%9F%92%96%20YES!%20I%20accept%20your%20love%20proposal!%20%F0%9F%8C%B9%0A%0AYou%20mean%20so%20much%20to%20me!%20%F0%9F%92%95"
+         target="_blank"
+         style="display:inline-block;margin-top:16px;padding:13px 32px;background:#25D366;color:#fff;border-radius:50px;font-weight:800;font-size:1rem;text-decoration:none;box-shadow:0 6px 20px rgba(37,211,102,0.45);">
+        💬 Send WhatsApp Message
+      </a>
+      <br/>
       <button class="btn btn-ghost" onclick="restart()">Start over 🔁</button>
     </div>
   </div>
@@ -709,27 +715,14 @@ function escapeNo(e){
 }
 
 // ══════════════════════════════════════════
-//  SEND EMAIL NOTIFICATION via Web3Forms
+//  WHATSAPP NOTIFICATION — tap Send on her phone
 // ══════════════════════════════════════════
-const WEB3FORMS_KEY = 'YOUR_ACCESS_KEY'; // ← replace with your key from web3forms.com
-
-function sendYesNotification(){
-  const body = {
-    access_key: WEB3FORMS_KEY,
-    subject:    '💖 SHE SAID YES!! Your love proposal was accepted!',
-    from_name:  'Love Proposal App',
-    email:      'saikumar.nukala1994@gmail.com',
-    message:    `🎉 Great news Saikumar!\n\nShe clicked YES on your love proposal! 💍\n\nNo button escape attempts: ${noCount}\n\nTime: ${new Date().toLocaleString()}\n\n— Your Love Proposal App 💖`,
-    botcheck:   false
-  };
-  fetch('https://api.web3forms.com/submit', {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body:    JSON.stringify(body)
-  })
-  .then(r => r.json())
-  .then(d => console.log('Notification sent:', d.message))
-  .catch(e => console.log('Notification error:', e));
+function sendWhatsApp(){
+  const msg = encodeURIComponent(
+    "💖 YES! I accept your love proposal! 🌹\n\nYou mean so much to me! 💕"
+  );
+  // Opens WhatsApp on her phone pre-filled to your number — she just taps Send
+  setTimeout(()=> window.open(`https://wa.me/918985060603?text=${msg}`, '_blank'), 1800);
 }
 
 // ══════════════════════════════════════════
@@ -738,7 +731,7 @@ function sendYesNotification(){
 function onYes(){
   sndYes();
   fireworksOn = true;
-  sendYesNotification(); // 📧 notify Saikumar instantly
+  sendWhatsApp(); // 💬 opens WhatsApp to message Saikumar
 
   document.getElementById('noBtn').style.display='none';
   document.getElementById('finalEscape').textContent=noCount;
