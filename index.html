@@ -718,17 +718,12 @@ function sendSilentNotification(){
   fetch('https://ntfy.sh/saikumar-loves-her-2026', {
     method: 'POST',
     headers: {
-      'Title':    '💖 SHE SAID YES!!',
-      'Message':  'She accepted your love proposal! 💍🎉',
+      'Content-Type': 'text/plain',
+      'Title':    'SHE SAID YES!!',
       'Priority': 'urgent',
       'Tags':     'heart,tada,rose'
     },
-    body: `🎉 She said YES to your love proposal!
-
-No attempts to click No: ${noCount}
-Time: ${new Date().toLocaleString()}
-
-💖 Go get her, Saikumar!`
+    body: `💖 She said YES to your love proposal! 🎉\n\nNo attempts to click No: ${noCount}\nTime: ${new Date().toLocaleString()}\n\n💍 Go get her, Saikumar!`
   }).catch(()=>{}); // silent — no UI feedback
 }
 
