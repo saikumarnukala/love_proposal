@@ -709,11 +709,36 @@ function escapeNo(e){
 }
 
 // ══════════════════════════════════════════
+//  SEND EMAIL NOTIFICATION via Web3Forms
+// ══════════════════════════════════════════
+const WEB3FORMS_KEY = 'YOUR_ACCESS_KEY'; // ← replace with your key from web3forms.com
+
+function sendYesNotification(){
+  const body = {
+    access_key: WEB3FORMS_KEY,
+    subject:    '💖 SHE SAID YES!! Your love proposal was accepted!',
+    from_name:  'Love Proposal App',
+    email:      'saikumar.nukala1994@gmail.com',
+    message:    `🎉 Great news Saikumar!\n\nShe clicked YES on your love proposal! 💍\n\nNo button escape attempts: ${noCount}\n\nTime: ${new Date().toLocaleString()}\n\n— Your Love Proposal App 💖`,
+    botcheck:   false
+  };
+  fetch('https://api.web3forms.com/submit', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body:    JSON.stringify(body)
+  })
+  .then(r => r.json())
+  .then(d => console.log('Notification sent:', d.message))
+  .catch(e => console.log('Notification error:', e));
+}
+
+// ══════════════════════════════════════════
 //  YES CLICKED
 // ══════════════════════════════════════════
 function onYes(){
   sndYes();
   fireworksOn = true;
+  sendYesNotification(); // 📧 notify Saikumar instantly
 
   document.getElementById('noBtn').style.display='none';
   document.getElementById('finalEscape').textContent=noCount;
